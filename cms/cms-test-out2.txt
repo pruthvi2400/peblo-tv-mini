@@ -1,0 +1,5 @@
+﻿
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/iampr/OneDrive/Desktop/submission/cms[39m
+
+ [32m✓[39m src/test/artwork/specs.test.ts [2m([22m[2m10 tests[22m[2m)[22m[90m 17[2mms[22m[39m
+ [32m✓[39m src/api/client.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 32[2mms[22m[39m

@@ -1,0 +1,17 @@
+.env
+.venv/
+venv/
+node_modules/
+__pycache__/
+.pytest_cache/
+*.pyc
+dist/
+build/
+
+
+backend/_storage/
+cms/*-out.txt
+cms/*_out.txt
+cms/*_results.txt
+cms/*_results.json
+viewer/fix_*.py

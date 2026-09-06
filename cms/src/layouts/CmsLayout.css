@@ -1,0 +1,134 @@
+.cms-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+  background: #f7f8fa;
+  color: #1f2530;
+}
+
+.cms-shell__sidebar {
+  background: #15233a;
+  color: #e8ecf3;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cms-shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.cms-shell__brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #ff7a18;
+  color: #fff;
+  font-weight: 700;
+}
+
+.cms-shell__nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cms-shell__nav-link {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #b8c2d1;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.cms-shell__nav-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.cms-shell__nav-link.is-active {
+  background: rgba(255, 122, 24, 0.18);
+  color: #fff;
+  font-weight: 600;
+}
+
+.cms-shell__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cms-shell__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e3e7ee;
+}
+
+.cms-shell__topbar-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.cms-shell__user {
+  font-weight: 600;
+  color: #1f2530;
+}
+
+.cms-shell__role {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cms-shell__role--editor {
+  background: #eef2f7;
+  color: #4a5b76;
+}
+
+.cms-shell__role--admin {
+  background: #ffe7d4;
+  color: #b8520a;
+}
+
+.cms-shell__content {
+  padding: 24px;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .cms-shell {
+    grid-template-columns: 1fr;
+  }
+  .cms-shell__sidebar {
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 16px;
+  }
+  .cms-shell__nav {
+    flex-direction: row;
+  }
+}

@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: peblo
+      POSTGRES_PASSWORD: peblo_secret
+      POSTGRES_DB: peblo_tv
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U peblo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://peblo:peblo_secret@postgres:5432/peblo_tv
+      DEV_SEED_USERS: "true"
+      DEV_EDITOR_EMAIL: editor@peblo.tv
+      DEV_EDITOR_PASSWORD: editor123
+      DEV_ADMIN_EMAIL: admin@peblo.tv
+      DEV_ADMIN_PASSWORD: admin123
+      HOST: "0.0.0.0"
+      PORT: "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  cms:
+    build:
+      context: ./cms
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    depends_on:
+      - backend
+
+  viewer:
+    build:
+      context: ./viewer
+      dockerfile: Dockerfile
+    ports:
+      - "5174:80"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

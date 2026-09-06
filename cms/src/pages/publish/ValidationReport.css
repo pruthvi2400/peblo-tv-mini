@@ -1,0 +1,141 @@
+﻿/* ValidationReport (Phase 7C) */
+
+.validation-report {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Banner */
+.validation-report__banner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.validation-report__banner strong {
+  font-weight: 700;
+}
+
+.validation-report__banner--ok {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.validation-report__banner--block {
+  background: #fff5f5;
+  border-color: #fca5a5;
+  color: #7f1d1d;
+}
+
+/* Meta line */
+.validation-report__meta {
+  font-size: 0.82rem;
+  color: #5b6577;
+  margin: -4px 0 0;
+}
+
+/* None state */
+.validation-report__none {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #5b6577;
+}
+
+/* Groups */
+.validation-report__groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.validation-report__group {
+  border: 1px solid #e3e7ee;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.validation-report__group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f4f6f9;
+  border-bottom: 1px solid #e3e7ee;
+  gap: 8px;
+}
+
+.validation-report__group-code {
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1f2530;
+}
+
+.validation-report__group-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5b6577;
+  background: #eef2f7;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.validation-report__group-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.validation-report__item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #f0f1f4;
+  font-size: 0.85rem;
+}
+
+.validation-report__item:last-child {
+  border-bottom: 0;
+}
+
+.validation-report__entity {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.validation-report__entity--show {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.validation-report__entity--episode {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.validation-report__title {
+  font-weight: 600;
+  color: #1f2530;
+  flex-shrink: 0;
+}
+
+.validation-report__message {
+  color: #4a5b76;
+  flex: 1;
+}

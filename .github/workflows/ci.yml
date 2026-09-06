@@ -1,0 +1,164 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  PYTHON_VERSION: '3.10'
+  NODE_VERSION: '20'
+
+jobs:
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-backend-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-backend-
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+      
+      - name: Run backend tests
+        run: |
+          cd backend
+          python -m pytest tests/ -v --tb=short
+
+  cms-test:
+    name: CMS Tests/Lint/Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: cms/package-lock.json
+      
+      - name: Install dependencies
+        run: cd cms && npm ci
+      
+      - name: Typecheck
+        run: cd cms && npm run typecheck
+      
+      - name: Lint
+        run: cd cms && npm run lint
+      
+      - name: Build
+        run: cd cms && npm run build
+      
+      - name: Tests
+        run: cd cms && npm run test
+
+  viewer-test:
+    name: Viewer Tests/Lint/Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: viewer/package-lock.json
+      
+      - name: Install dependencies
+        run: cd viewer && npm ci
+      
+      - name: Typecheck
+        run: cd viewer && npm run typecheck
+      
+      - name: Lint
+        run: cd viewer && npm run lint
+      
+      - name: Build
+        run: cd viewer && npm run build
+      
+      - name: Tests
+        run: cd viewer && npm run test
+
+  docker-build:
+    name: Docker Images Build
+    runs-on: ubuntu-latest
+    needs: [backend-test, cms-test, viewer-test]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      
+      - name: Build Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: false
+          tags: peblo/backend:latest
+      
+      - name: Build CMS
+        uses: docker/build-push-action@v5
+        with:
+          context: ./cms
+          push: false
+          tags: peblo/cms:latest
+      
+      - name: Build Viewer
+        uses: docker/build-push-action@v5
+        with:
+          context: ./viewer
+          push: false
+          tags: peblo/viewer:latest
+
+  deploy:
+    name: Deployment Explanation
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    
+    steps:
+      - name: Deployment Instructions
+        run: |
+          echo "=== DEPLOYMENT GUIDE ==="
+          echo ""
+          echo "1. Push Docker images:"
+          echo "   docker tag peblo/backend:latest your-registry/peblo-backend:latest"
+          echo "   docker push your-registry/peblo-backend:latest"
+          echo ""
+          echo "2. Infrastructure options:"
+          echo "   - Docker Compose with traefik on VPS"
+          echo "   - Kubernetes with Helm charts"
+          echo "   - AWS ECS/Fargate"
+          echo "   - Cloud Run (GCP)"
+          echo ""
+          echo "3. Required env vars:"
+          echo "   - DATABASE_URL (managed PostgreSQL)"
+          echo "   - JWT_SECRET_KEY (32+ bytes)"
+          echo "   - STORAGE_BACKEND=r2 or s3 for production"
+          echo "   - DEV_SEED_USERS=false"
+          echo ""
+          echo "4. Production compose would use:"
+          echo "   - Managed PostgreSQL (RDS, Cloud SQL)"
+          echo "   - S3/R2 for artwork storage"
+          echo "   - CDN for static assets"
+          echo "   - Load balancer with SSL"
