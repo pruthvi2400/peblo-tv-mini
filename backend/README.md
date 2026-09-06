@@ -1,4 +1,4 @@
-ï»¿# Peblo TV Mini Backend
+# Peblo TV Mini Backend
 
 A FastAPI-based backend for the Peblo TV Mini application.
 
@@ -33,14 +33,14 @@ alembic upgrade head
 
 ### 4. (Optional) Seed the Catalog
 
-Phase 3 ships a one-shot loader for `D:\iampr\downloads\seed_shows.json`:
+Phase 3 ships a one-shot loader for `tests/fixtures/seed_shows.json`:
 
 ```python
 from app.db.session import SessionLocal
 from app.services.seed import load_seed_shows
 
 with SessionLocal() as s:
-    result = load_seed_shows(s, r"D:\iampr\downloads\seed_shows.json")
+    result = load_seed_shows(s, r"tests/fixtures/seed_shows.json")
     print(result.to_dict())
 ```
 
@@ -187,9 +187,9 @@ access token issued by `POST /auth/login`. The login response carries
 
 Two roles are defined:
 
-  * **editor** â€” can read / create / update / delete shows, seasons,
+  * **editor** — can read / create / update / delete shows, seasons,
     episodes and artwork, and view the publish-blocker report.
-  * **admin** â€” everything an editor can do, plus publishing the
+  * **admin** — everything an editor can do, plus publishing the
     catalogue (placeholder endpoint in Phase 5; real implementation
     in Phase 6).
 
@@ -201,8 +201,8 @@ Endpoints are gated with three reusable FastAPI dependencies:
 
 HTTP status codes for auth failures:
 
-  * `401 not_authenticated` â€” no / malformed / expired / revoked token
-  * `403 insufficient_role` â€” authenticated but wrong role
+  * `401 not_authenticated` — no / malformed / expired / revoked token
+  * `403 insufficient_role` — authenticated but wrong role
 
 To enable the development-only seed users, set:
 
@@ -350,7 +350,7 @@ regular season list.
 Local storage uses an atomic filesystem temp-file + `os.replace` strategy
 for live catalogue publication. Rename on a single filesystem is atomic,
 so a concurrent reader always sees either the previous complete catalogue
-or the new complete one â€” never a partial file. The publisher applies
+or the new complete one — never a partial file. The publisher applies
 the same pattern explicitly for the live pointer:
 
 1. Build the complete catalogue in memory.
@@ -382,7 +382,7 @@ publish succeeds.
 
 A production Cloudflare R2 implementation would use an equivalent
 atomic publication/manifest strategy appropriate to object storage
-rather than filesystem rename â€” for example, uploading the new catalogue
+rather than filesystem rename — for example, uploading the new catalogue
 bytes under an immutable key plus an atomic pointer flip (a versioned
 object, a head `PutObject` with `If-None-Match: *`, a signed manifest,
 or a CDN edge worker that swaps a manifest pointer in a single atomic
@@ -449,47 +449,47 @@ run against the test engine.
 ```
 backend/
 +-- app/
-Â¦   +-- __init__.py
-Â¦   +-- main.py                  # FastAPI entry point
-Â¦   +-- api/                     # HTTP routes
-Â¦   Â¦   +-- __init__.py
-Â¦   Â¦   +-- deps.py              # FastAPI dependencies
-Â¦   Â¦   +-- errors.py            # service-error -> HTTP handlers
-Â¦   Â¦   +-- shows.py             # /api/shows CRUD
-Â¦   Â¦   +-- seasons.py           # /api/seasons CRUD
-Â¦   Â¦   +-- episodes.py          # /api/episodes CRUD
-Â¦   +-- core/                    # cross-cutting config
-Â¦   Â¦   +-- config.py
-Â¦   Â¦   +-- enums.py             # reference.json-derived constants
-Â¦   Â¦   +-- pagination.py        # pagination helpers
-Â¦   +-- db/                      # SQLAlchemy engine + Base
-Â¦   Â¦   +-- base.py
-Â¦   Â¦   +-- session.py
-Â¦   +-- models/                  # ORM models (Phase 2)
-Â¦   +-- schemas/                 # Pydantic request/response schemas
-Â¦   Â¦   +-- __init__.py
-Â¦   Â¦   +-- common.py
-Â¦   Â¦   +-- user.py
-Â¦   Â¦   +-- show.py
-Â¦   Â¦   +-- season.py
-Â¦   Â¦   +-- episode.py
-Â¦   Â¦   +-- artwork.py
-Â¦   Â¦   +-- publish.py
-Â¦   +-- services/                # DB-access logic
-Â¦       +-- __init__.py
-Â¦       +-- errors.py            # NotFoundError, ConflictError, ValidationFailure
-Â¦       +-- shows.py
-Â¦       +-- seasons.py
-Â¦       +-- episodes.py
-Â¦       +-- seed.py              # seed_shows.json loader
+¦   +-- __init__.py
+¦   +-- main.py                  # FastAPI entry point
+¦   +-- api/                     # HTTP routes
+¦   ¦   +-- __init__.py
+¦   ¦   +-- deps.py              # FastAPI dependencies
+¦   ¦   +-- errors.py            # service-error -> HTTP handlers
+¦   ¦   +-- shows.py             # /api/shows CRUD
+¦   ¦   +-- seasons.py           # /api/seasons CRUD
+¦   ¦   +-- episodes.py          # /api/episodes CRUD
+¦   +-- core/                    # cross-cutting config
+¦   ¦   +-- config.py
+¦   ¦   +-- enums.py             # reference.json-derived constants
+¦   ¦   +-- pagination.py        # pagination helpers
+¦   +-- db/                      # SQLAlchemy engine + Base
+¦   ¦   +-- base.py
+¦   ¦   +-- session.py
+¦   +-- models/                  # ORM models (Phase 2)
+¦   +-- schemas/                 # Pydantic request/response schemas
+¦   ¦   +-- __init__.py
+¦   ¦   +-- common.py
+¦   ¦   +-- user.py
+¦   ¦   +-- show.py
+¦   ¦   +-- season.py
+¦   ¦   +-- episode.py
+¦   ¦   +-- artwork.py
+¦   ¦   +-- publish.py
+¦   +-- services/                # DB-access logic
+¦       +-- __init__.py
+¦       +-- errors.py            # NotFoundError, ConflictError, ValidationFailure
+¦       +-- shows.py
+¦       +-- seasons.py
+¦       +-- episodes.py
+¦       +-- seed.py              # seed_shows.json loader
 +-- alembic/                     # Migrations (Phase 2)
 +-- tests/                       # Pytest suite
-Â¦   +-- __init__.py
-Â¦   +-- conftest.py
-Â¦   +-- test_crud_basic.py
-Â¦   +-- test_pagination.py
-Â¦   +-- test_validation.py
-Â¦   +-- test_seed.py
+¦   +-- __init__.py
+¦   +-- conftest.py
+¦   +-- test_crud_basic.py
+¦   +-- test_pagination.py
+¦   +-- test_validation.py
+¦   +-- test_seed.py
 +-- alembic.ini
 +-- pytest.ini
 +-- requirements.txt
@@ -514,4 +514,5 @@ alembic history
 # Show current migration
 alembic current
 ```
+
 

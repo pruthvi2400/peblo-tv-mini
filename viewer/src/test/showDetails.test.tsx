@@ -3,13 +3,13 @@
  */
 import { afterEach, describe, it, expect } from 'vitest';
 import { screen, waitFor, cleanup } from '@testing-library/react';
-import { renderApp, mockFetchWith } from './testUtils';
+import { renderApp, mockFetchWith, restoreFetch } from './testUtils';
 import { makeFullCatalog, makeShow } from './fixtures';
 
 describe('SHOW DETAILS: rendering', () => {
-  afterEach(() => {
-    cleanup();
-  });
+  let currentClient: ReturnType<typeof renderApp>['client'] | undefined;
+
+  afterEach(() => { restoreFetch(); if (currentClient) { currentClient.clear(); } cleanup(); });
 
   it('renders show title, synopsis, and categories', async () => {
     const catalog = makeFullCatalog();
@@ -19,6 +19,7 @@ describe('SHOW DETAILS: rendering', () => {
       }),
     );
     const { client } = renderApp({ initialRoute: '/shows/moon-adventure' });
+    currentClient = client;
 
     await waitFor(
       () => {
@@ -41,6 +42,7 @@ describe('SHOW DETAILS: rendering', () => {
       }),
     );
     const { client } = renderApp({ initialRoute: '/shows/moon-adventure' });
+    currentClient = client;
 
     await waitFor(
       () => {
@@ -59,6 +61,7 @@ describe('SHOW DETAILS: rendering', () => {
       }),
     );
     const { client } = renderApp({ initialRoute: '/shows/does-not-exist' });
+    currentClient = client;
 
     await waitFor(
       () => {
@@ -77,6 +80,7 @@ describe('SHOW DETAILS: rendering', () => {
       }),
     );
     const { client } = renderApp({ initialRoute: '/shows/moon-adventure' });
+    currentClient = client;
 
     await waitFor(
       () => {
@@ -95,40 +99,18 @@ describe('SHOW DETAILS: rendering', () => {
       }),
     );
     const { client } = renderApp({ initialRoute: '/shows/moon-adventure' });
+    currentClient = client;
 
-    // Wait for the season block to appear (indicating data has loaded)
     await waitFor(
       () => {
         expect(screen.getByTestId('season-block')).toBeInTheDocument();
       },
       { client },
     );
-    // There are multiple episode rows: trailers (1) + season episodes (2) = 3 total
-    // Use getAllByTestId since we expect multiple rows
-    const episodes = screen.getAllByTestId('episode-row');
-    expect(episodes.length).toBeGreaterThan(0);
-  });
-
-  it('renders episode titles', async () => {
-    const catalog = makeFullCatalog();
-    mockFetchWith(() =>
-      new Response(JSON.stringify(catalog), {
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-    const { client } = renderApp({ initialRoute: '/shows/moon-adventure' });
-
-    // Wait for the season block to appear (indicating data has loaded)
-    await waitFor(
-      () => {
-        expect(screen.getByTestId('season-block')).toBeInTheDocument();
-      },
-      { client },
-    );
-    // Use getAllByTestId since there are multiple episode titles
+    const episodeRows = screen.getAllByTestId('episode-row');
+    expect(episodeRows.length).toBeGreaterThan(0);
     const episodeTitles = screen.getAllByTestId('episode-title');
     expect(episodeTitles.length).toBeGreaterThan(0);
-    // Verify the specific episode title appears
     expect(screen.getByText('Lift Off')).toBeInTheDocument();
   });
 
@@ -140,19 +122,16 @@ describe('SHOW DETAILS: rendering', () => {
       }),
     );
     const { client } = renderApp({ initialRoute: '/shows/moon-adventure' });
+    currentClient = client;
 
-    // Wait for season block to appear (data loaded)
     await waitFor(
       () => {
         expect(screen.getByTestId('season-block')).toBeInTheDocument();
       },
       { client },
     );
-    // There are multiple episodes with language tags (trailer + season episodes)
-    // Use getAllByTestId since there can be multiple language elements
     const languageTags = screen.getAllByTestId('episode-languages');
     expect(languageTags.length).toBeGreaterThan(0);
-    // Verify the expected content appears (use getAllByText since there may be multiple matches)
     const matchingElements = screen.getAllByText(/en.*\|.*hi/i);
     expect(matchingElements.length).toBeGreaterThan(0);
   });
@@ -165,6 +144,7 @@ describe('SHOW DETAILS: rendering', () => {
       }),
     );
     const { client } = renderApp({ initialRoute: '/shows/moon-adventure' });
+    currentClient = client;
 
     await waitFor(
       () => {
@@ -175,7 +155,7 @@ describe('SHOW DETAILS: rendering', () => {
     expect(screen.getByTestId('trailer-title')).toHaveTextContent('Trailers');
   });
 
-  it('does NOT display "Season 0" as a normal season', async () => {
+  it('does NOT display Season 0 as a normal season', async () => {
     const catalog = makeFullCatalog();
     mockFetchWith(() =>
       new Response(JSON.stringify(catalog), {
@@ -183,6 +163,7 @@ describe('SHOW DETAILS: rendering', () => {
       }),
     );
     const { client } = renderApp({ initialRoute: '/shows/moon-adventure' });
+    currentClient = client;
 
     await waitFor(
       () => {
@@ -201,7 +182,9 @@ describe('SHOW DETAILS: rendering', () => {
       seasons: [],
     });
     const catalog = {
-      ...makeFullCatalog(),
+      version: 1,
+      published_at: '2024-01-01T00:00:00Z',
+      publish_run_id: null,
       sections: [{ key: 'series', shows: [emptyShow] }],
     };
     mockFetchWith(() =>
@@ -210,6 +193,7 @@ describe('SHOW DETAILS: rendering', () => {
       }),
     );
     const { client } = renderApp({ initialRoute: '/shows/empty-show' });
+    currentClient = client;
 
     await waitFor(
       () => {
@@ -219,10 +203,17 @@ describe('SHOW DETAILS: rendering', () => {
     );
   });
 
-  it('shows loading spinner on show page while loading', () => {
+  it('shows loading spinner on show page while loading', async () => {
     mockFetchWith(() => new Promise(() => {}));
     const { client } = renderApp({ initialRoute: '/shows/moon-adventure' });
-    expect(screen.getByTestId('show-loading')).toBeInTheDocument();
+    currentClient = client;
+
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('show-loading')).toBeInTheDocument();
+      },
+      { client },
+    );
     client.cancelQueries();
   });
 });

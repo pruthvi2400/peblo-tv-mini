@@ -1,4 +1,4 @@
-// @ts-expect-error React import required for ESLint react/react-in-jsx-scope rule
+﻿// @ts-expect-error React import required for ESLint react/react-in-jsx-scope rule
 import React from 'react';
 
 import type { CatalogShow } from '../types/catalog';
@@ -11,7 +11,7 @@ export function ShowCard({ show }: ShowCardProps) {
       <div className="show-card-poster">
         <div className="show-card-poster-placeholder" />
       </div>
-      <h3 className="show-card-title" data-testid="show-title">{show.title}</h3>
+      <h3 className="show-card-title" data-testid="show-card-title">{show.title}</h3>
       <p className="show-card-meta" data-testid="show-meta">{show.categories.join(', ')}</p>
     </div>
   );

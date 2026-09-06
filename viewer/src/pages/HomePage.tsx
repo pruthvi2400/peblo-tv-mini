@@ -14,8 +14,11 @@ export function HomePage() {
   });
 
   if (isLoading) return <div data-testid="home-loading">Loading...</div>;
-  if (error) return <div data-testid="home-error">Error: {error.message}</div>;
+  if (error) return <div data-testid="home-error">Error: failed to load catalogue</div>;
   if (!data) return null;
+  if (data.sections.length === 0) {
+    return <div data-testid="home-empty">No content available</div>;
+  }
 
   return (
     <div className="home-page" data-testid="home-page">

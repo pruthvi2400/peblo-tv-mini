@@ -3,13 +3,11 @@
  */
 import { afterEach, describe, it, expect } from "vitest";
 import { screen, waitFor, cleanup, act } from "@testing-library/react";
-import { renderApp, mockFetchWith } from "./testUtils";
+import { renderApp, mockFetchWith, restoreFetch } from "./testUtils";
 import { makeFullCatalog, makeEmptyCatalog } from "./fixtures";
 
 describe("HOME: loading and empty states", () => {
-  afterEach(() => {
-    cleanup();
-  });
+  afterEach(() => { restoreFetch(); cleanup(); });
 
   it("renders the home page after successful catalogue load", async () => {
     const catalog = makeFullCatalog();
@@ -49,7 +47,7 @@ describe("HOME: loading and empty states", () => {
     await act(async () => {
       await new Promise(resolve => setTimeout(resolve, 100));
     });
-    
+
     await waitFor(
       () => {
         expect(screen.getByTestId("home-error")).toBeInTheDocument();
@@ -81,9 +79,7 @@ describe("HOME: loading and empty states", () => {
 });
 
 describe("HOME: hero and section rows", () => {
-  afterEach(() => {
-    cleanup();
-  });
+  afterEach(() => { restoreFetch(); cleanup(); });
 
   it("renders the featured hero when a featured show exists", async () => {
     const catalog = makeFullCatalog();
@@ -171,8 +167,16 @@ describe("HOME: hero and section rows", () => {
     );
 
     const nonEmptySections = filteredSections.filter((s) => s.shows.length > 0);
+    // "featured" is rendered by Hero, not as a SectionRow.
+    // SectionRow also skips empty sections.
+    const expectedRowCount = nonEmptySections.filter((s) => s.key !== "featured").length;
     const rows = screen.getAllByTestId("section-row");
-    expect(rows).toHaveLength(nonEmptySections.length);
+    expect(rows).toHaveLength(expectedRowCount);
+    // The featured section should appear in Hero, not as a section row
+    const heroSection = filteredSections.find((s) => s.key === "featured");
+    if (heroSection && heroSection.shows.length > 0) {
+      expect(screen.getByTestId("hero")).toBeInTheDocument();
+    }
   });
 
   it("renders show cards with title and metadata", async () => {

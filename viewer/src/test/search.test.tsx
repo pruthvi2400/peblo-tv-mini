@@ -4,13 +4,11 @@
 import { afterEach, describe, it, expect } from 'vitest';
 import { screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { renderApp, mockFetchWith, mockFetchResponse } from './testUtils';
+import { renderApp, mockFetchWith, mockFetchResponse, restoreFetch } from './testUtils';
 import { makeShow } from './fixtures';
 
 describe('SEARCH: filters and results', () => {
-  afterEach(() => {
-    cleanup();
-  });
+  afterEach(() => { restoreFetch(); cleanup(); });
 
   it('sends the q parameter to the backend', async () => {
     const mock = mockFetchWith((url) => {
