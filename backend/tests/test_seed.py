@@ -17,7 +17,7 @@ from app.services.seed import (
 )
 
 
-SEED_PATH = Path(r"D:\iampr\downloads\seed_shows.json")
+SEED_PATH = Path(__file__).parent / "fixtures" / "seed_shows.json"
 
 
 def _seed_once(db) -> SeedResult:
@@ -181,3 +181,4 @@ def test_seed_season_zero_treated_as_data(db):
     _seed_once(db)
     s0_count = db.query(Season).filter_by(season_number=0).count()
     assert s0_count >= 1
+
