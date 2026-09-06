@@ -11,7 +11,7 @@ function formatDuration(seconds: number | null | undefined): string {
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
   if (h > 0) return h + 'h ' + m + 'm';
-  if (m > 0) return m + 'm ' + (s > 0 ? s + 's' : '');
+  if (m > 0) return m + 'm' + (s > 0 ? ' ' + s + 's' : '');
   return s + 's';
 }
 

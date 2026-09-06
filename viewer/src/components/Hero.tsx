@@ -36,15 +36,30 @@ export function Hero({ sections }: HeroProps) {
         <div className="hero-backdrop-overlay" />
       </div>
       <div className="hero-content">
-        <h1 className="hero-title" data-testid="hero-title">{show.title}</h1>
-        {show.synopsis ? <p className="hero-synopsis">{show.synopsis}</p> : null}
-        <ul className="hero-meta">
-          {show.categories.length > 0 && <li className="hero-meta-item" data-testid="hero-categories">{show.categories.join(' Â· ')}</li>}
-          {show.trailers.length > 0 && <li className="hero-meta-item">{show.trailers.length} {show.trailers.length === 1 ? 'trailer' : 'trailers'}</li>}
-          {show.seasons.length > 0 && <li className="hero-meta-item">{show.seasons.length} {show.seasons.length === 1 ? 'season' : 'seasons'}</li>}
-        </ul>
-        <div className="hero-actions">
-          <Link to={'/shows/' + encodeURIComponent(show.slug)} className="hero-button hero-button--primary" data-testid="hero-cta">View details</Link>
+        <div className="hero-content-inner">
+          {show.categories.length > 0 && (
+            <span className="hero-eyebrow">{show.categories[0]}</span>
+          )}
+          <h1 className="hero-title" data-testid="hero-title">{show.title}</h1>
+          {show.synopsis ? <p className="hero-synopsis">{show.synopsis}</p> : null}
+          <ul className="hero-meta">
+            {show.trailers.length > 0 && (
+              <li className="hero-meta-item">
+                <span className="hero-meta-badge">{show.trailers.length} {show.trailers.length === 1 ? 'Trailer' : 'Trailers'}</span>
+              </li>
+            )}
+            {show.seasons.length > 0 && (
+              <li className="hero-meta-item">
+                <span className="hero-meta-badge">{show.seasons.length} {show.seasons.length === 1 ? 'Season' : 'Seasons'}</span>
+              </li>
+            )}
+            {show.categories.length > 1 && (
+              <li className="hero-meta-item">{show.categories.slice(1).join(' · ')}</li>
+            )}
+          </ul>
+          <div className="hero-actions">
+            <Link to={'/shows/' + encodeURIComponent(show.slug)} className="hero-button hero-button--primary" data-testid="hero-cta">View Show</Link>
+          </div>
         </div>
       </div>
     </section>

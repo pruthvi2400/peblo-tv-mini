@@ -1,4 +1,4 @@
-﻿// @ts-expect-error React import required for ESLint react/react-in-jsx-scope rule
+// @ts-expect-error React import required for ESLint react/react-in-jsx-scope rule
 import React from 'react';
 
 import { Link } from 'react-router-dom';

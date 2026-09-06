@@ -1,4 +1,4 @@
-﻿// @ts-expect-error React import required for ESLint react/react-in-jsx-scope rule
+// @ts-expect-error React import required for ESLint react/react-in-jsx-scope rule
 import React from 'react';
 
 import { useState, useEffect } from 'react';
@@ -58,24 +58,32 @@ export function SearchPage() {
   }
 
   const hasNoResults = data && data.results.length === 0;
+  const hasSearchQuery = search || selectedCategory || selectedLanguage || selectedSection;
 
   return (
     <div className="search-page" data-testid="search-page">
       <div className="search-header">
-        <h1 className="search-title">Search</h1>
+        <h1 className="search-title">Discover</h1>
+        <p className="search-subtitle">Find something to watch</p>
         <div className="search-controls">
           <div className="search-controls-row">
             <div className="search-field search-field--grow">
               <label htmlFor="search-q" className="search-field-label">Search</label>
-              <input
-                id="search-q"
-                type="text"
-                placeholder="Search shows..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="search-input"
-                data-testid="search-input-q"
-              />
+              <div className="search-input-wrapper">
+                <svg className="search-input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                  id="search-q"
+                  type="text"
+                  placeholder="Search titles..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="search-input"
+                  data-testid="search-input-q"
+                />
+              </div>
             </div>
             <SearchFilters
               selectedCategory={selectedCategory}
@@ -106,9 +114,11 @@ export function SearchPage() {
         </div>
       ) : (
         <>
-          <p className="search-results-count" data-testid="search-count">
-            {data && <strong>{data.count}</strong>} result{data?.count !== 1 ? 's' : ''} found
-          </p>
+          {data && hasSearchQuery && (
+            <p className="search-results-count" data-testid="search-count">
+              <strong>{data.count}</strong> result{data?.count !== 1 ? 's' : ''} found
+            </p>
+          )}
           <div className="search-results" data-testid="search-results">
             {data?.results.map((show: CatalogShow) => (
               <ShowCard key={show.slug} show={show} />
