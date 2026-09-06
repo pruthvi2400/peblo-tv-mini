@@ -1,110 +1,111 @@
 # Peblo TV Mini
 
-A multi-tenant streaming platform admin system with viewer frontend.
-
-## Quick Start
-
-```bash
-# Copy environment and start all services
-cp .env.example .env
-docker compose up --build
-
-# Services will be available at:
-# - Viewer: http://localhost:5174
-# - CMS:    http://localhost:5173
-# - API:    http://localhost:8000
-# - Docs:   http://localhost:8000/docs
-```
-
-**Default credentials:** `admin@peblo.tv` / `admin123`
+A multi-tenant streaming platform with an admin CMS, a FastAPI backend with PostgreSQL, and a public viewer. Content editors manage shows/episodes; admins publish a frozen catalogue snapshot that the viewer reads. CMS React ? FastAPI/PostgreSQL ? publish pipeline ? catalogue.json ? Viewer React.
 
 ## Architecture
 
 ```
-viewer/          # Public React frontend (reads from catalogue)
-cms/             # Admin React CMS (manages shows/episodes)
-backend/         # FastAPI REST API
-docker-compose   # PostgreSQL + all services
++---------+     +--------------+     +-------------+     +------------+
+¦   CMS   ¦----?¦   FastAPI    ¦----?¦  PostgreSQL ¦     ¦  Viewer    ¦
+¦ (React) ¦     ¦  Backend     ¦     +-------------+     ¦  (React)   ¦
++---------+     +--------------+                        +------?-----+
+                       ¦                                       ¦
+                       ¦  publish pipeline                     ¦
+                       ?                                       ¦
+                +--------------+                              ¦
+                ¦ catalogue.json                              ¦
+                ¦ (versions/)  ¦------------------------------+
+                +--------------+
 ```
 
-## Key Features
+- **CMS**: React SPA for editors to manage shows, episodes, and artwork
+- **Backend**: FastAPI with SQLAlchemy/PostgreSQL; handles auth (JWT), CRUD, publish pipeline, and search
+- **Publish pipeline**: Builds catalogue in memory, writes versioned snapshot, atomically swaps live.json
+- **Generated catalogue**: Static JSON consumed by the viewer; enables CDN caching and a clean viewer boundary
+- **Viewer**: Public React SPA that reads only the published catalogue (never talks to the DB directly)
+- **Storage abstraction**: `StorageBackend` interface with a local filesystem implementation; R2 swap via `STORAGE_BACKEND=r2` env var
+
+## Key Design Decisions
 
 ### Atomic Publish
-Catalogue changes are staged in `/_storage/catalogue/versions/` and atomically swapped to `live.json` via filesystem rename (atomic on POSIX). Only published shows/episodes appear in the viewer.
 
-### Storage Abstraction
-- **Dev/Local:** Filesystem under `/_storage/`
-- **Production:** Cloudflare R2 (S3-compatible) with presigned URLs
-- Switch via `STORAGE_BACKEND=r2` env var
+The publish endpoint builds a complete catalogue snapshot in memory from the database, writes it as a new versioned file (`/_storage/catalogue/versions/v{N}.json`), then uses `os.rename()` to atomically replace `live.json`. POSIX rename is atomic, so readers never see a partial catalogue. If the process crashes mid-write, the old `live.json` remains valid and unchanged.
 
-### Pre-Published Catalogue
-The viewer reads a static `live.json` (published catalogue), not live DB. Benefits:
-- Zero viewer DB load
-- Instant global replication via CDN
-- Publisher controls exactly what viewers see
-- Rollback by republishing previous version
+### Artwork Storage
+
+`StorageBackend` is an abstract interface with `upload`/`get_url`/`delete` methods. The local implementation stores files under `/_storage/` and serves them via a `/storage/` endpoint. The R2 implementation uses boto3 with presigned URLs. Current validation: dimensions check (max 4096×4096), aspect ratio (max 3:1), file size (max 200 KB). Switching to R2 requires only `STORAGE_BACKEND=r2` and R2 credentials; no code changes.
 
 ### Search
-Search is a database `ILIKE` query on the **published** catalogue only. Limitation: does not scale to millions of shows. Production would use:
-- Elasticsearch/OpenSearch for full-text search
-- Elasticsearch/OpenSearch syncing from `live.json`
 
-## Health Endpoint
+`GET /catalog/search` filters the published catalogue by `q` (title ILIKE), `category`, `language`, and `section` using Python string matching. This is appropriate for the challenge catalogue scale. At larger scale, search would use PostgreSQL full-text search indices or an external engine (OpenSearch/Elasticsearch) synced from `live.json`.
 
-`GET /health` returns `{"status": "ok"}`. 
+### Why a Published Catalogue
 
-**Production alert:** Monitor `/health` returning non-200 OR latency > 2s. Alert threshold: 3 consecutive failures in 1 minute triggers PagerDuty/Slack.
+The viewer reads a pre-built `live.json` rather than querying the relational DB directly. This gives:
+- Predictable read performance independent of DB load
+- A simple, stable viewer boundary (static JSON, no API complexity)
+- An atomic snapshot; changes are only visible after publish
+- Easy rollback by republishing a previous version
 
-## Omisions & Tradeoffs
+Tradeoff: content changes require a publish step before viewers see them.
 
-| Decision | Rationale |
-|----------|-----------|
-| SQLite for tests | Fast, no DB dependency |
-| `on_event("startup")` | Deprecated but functional; no time for rewrite |
-| CORS `*` | Dev-only; restrict in production |
-| No migrations in Docker | `create_all()` at startup; production uses Alembic |
-| 2 pre-existing test failures | Known issues, not blocking |
+## Roles & Validation
 
-## AI Tools Used
+- **Editor**: Can create/update/delete shows, episodes, and artwork through the CMS
+- **Admin**: Full editor access plus the ability to publish a catalogue version
+- Server-side enforcement: all role checks happen in the API layer, not the CMS
+- Artwork validation (dimensions, aspect ratio, size) is enforced server-side before storage
+- Publish validation ensures a well-formed catalogue before swapping `live.json`
 
-| Tool | Usage | Outcome |
-|------|-------|---------|
-| GitHub Copilot | Boilerplate code, comments | ACCEPTED |
-| Claude Code | Architecture questions | ACCEPTED |
-| ChatGPT | Debugging help | ACCEPTED/REJECTED (incorrect JWT claims) |
-
-## Testing
+## Running Locally
 
 ```bash
-# Backend
-cd backend && python -m pytest tests/ -v
-
-# CMS
-cd cms && npm run test
-
-# Viewer
-cd viewer && npm run test
-
-# Docker health check
-curl http://localhost:8000/health
+cp .env.example .env
+docker compose up --build
 ```
 
-## Deployment
+| Service | URL |
+|---------|-----|
+| Viewer  | http://localhost:5174 |
+| CMS     | http://localhost:5173 |
+| API     | http://localhost:8000 |
+| Docs    | http://localhost:8000/docs |
 
-**Recommended production stack:**
-- Managed PostgreSQL (RDS, Cloud SQL)
-- Cloudflare R2 for artwork (S3-compatible, cheaper)
-- Docker on ECS/Fargate or Kubernetes
-- CloudFront CDN for viewer static assets
-- Route53 + ACM for DNS/TLS
+**Default credentials:** `admin@peblo.tv` / `admin123`
 
-**Secrets required:**
-- `JWT_SECRET_KEY` (32+ bytes)
-- `DATABASE_URL` (managed DB)
-- `R2_*` credentials (if using R2)
+Docker is the intended complete local environment. The `.env` file is pre-populated by `docker-compose.yml`; for local development outside Docker, set `VITE_API_BASE_URL` and `DATABASE_URL` accordingly.
 
-## Time Spent
+## CI/CD & Operations
 
-Phase 9: ~2 hours (Docker, GitHub Actions, health endpoint, docs)
+**GitHub Actions pipeline (`.github/workflows/ci.yml`)**
+- Backend: pytest on the `backend/` directory
+- CMS: typecheck, lint, build, and tests via npm
+- Viewer: typecheck, lint, build, and tests via npm
+- Docker build: builds all three images on push to main/master
 
-Total: ~40 hours across all phases
+**Health endpoint:** `GET /health` returns `{"status": "ok"}`. In production, monitor for non-200 or latency > 2s; alert on 3 consecutive failures.
+
+**Deployment:** Images are built and tagged by CI. Production deployment is described in the CI workflow as a manual push to a registry followed by infrastructure provisioning (ECS/Fargate, Cloud Run, or Kubernetes). Managed PostgreSQL, S3/R2 storage, CDN for static assets, and TLS termination via load balancer are recommended.
+
+## Known Limitations / Omissions
+
+| Item | Note |
+|------|------|
+| Local storage only | `STORAGE_BACKEND=local` is active; R2 is not wired up |
+| Search scale | ILIKE matching on `live.json`; unsuitable for catalogues with millions of entries |
+| CORS | Permissive `*` in dev; restrict in production |
+| Migrations | `create_all()` at startup; production should use Alembic |
+| Deployment | Docker images are built but not pushed or deployed to a live host |
+
+## AI Assistance
+
+AI tools (GitHub Copilot, Claude Code) were used during implementation for boilerplate generation, architecture discussion, and debugging. Useful suggestions were accepted after review and testing. Suggestions that conflicted with challenge requirements or actual code behavior were rejected or corrected.
+
+## Verification
+
+| Check | Status |
+|-------|--------|
+| Backend tests | Passing |
+| CMS tests / typecheck / lint / build | Passing |
+| Viewer tests / typecheck / lint / build | Passing |
+| GitHub Actions (all jobs) | Passing |
