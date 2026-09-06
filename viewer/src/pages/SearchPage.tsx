@@ -40,29 +40,61 @@ export function SearchPage() {
     setSelectedSection('');
   };
 
-  if (isLoading) return <div data-testid="search-loading">Loading...</div>;
-  if (error) return <div data-testid="search-error">Error: {error.message}</div>;
+  if (isLoading) {
+    return (
+      <div className="loading-state" data-testid="search-loading">
+        <div className="spinner"></div>
+        <span className="loading-state__text">Searching...</span>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="error-state" data-testid="search-error">
+        <h2 className="error-state__title">Search error</h2>
+        <p className="error-state__message">{error.message}</p>
+      </div>
+    );
+  }
 
   const hasNoResults = data && data.results.length === 0;
 
   return (
     <div className="search-page" data-testid="search-page">
-      <h1>Search</h1>
-      <input
-        type="text"
-        placeholder="Search shows..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="search-input"
-        data-testid="search-input-q"
-      />
-      <SearchFilters
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-      />
+      <div className="search-header">
+        <h1 className="search-title">Search</h1>
+        <div className="search-controls">
+          <div className="search-controls-row">
+            <div className="search-field search-field--grow">
+              <label htmlFor="search-q" className="search-field-label">Search</label>
+              <input
+                id="search-q"
+                type="text"
+                placeholder="Search shows..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="search-input"
+                data-testid="search-input-q"
+              />
+            </div>
+            <SearchFilters
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
+          </div>
+        </div>
+      </div>
+      
       {hasNoResults ? (
         <div className="search-empty" data-testid="search-empty">
-          <p>No results found</p>
+          <div className="search-empty__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </div>
+          <h2 className="search-empty__title">No results found</h2>
+          <p className="search-empty__message">Try adjusting your search or filters</p>
           <button
             type="button"
             onClick={handleClear}
@@ -73,11 +105,16 @@ export function SearchPage() {
           </button>
         </div>
       ) : (
-        <div className="search-results" data-testid="search-results">
-          {data?.results.map((show: CatalogShow) => (
-            <ShowCard key={show.slug} show={show} />
-          ))}
-        </div>
+        <>
+          <p className="search-results-count" data-testid="search-count">
+            {data && <strong>{data.count}</strong>} result{data?.count !== 1 ? 's' : ''} found
+          </p>
+          <div className="search-results" data-testid="search-results">
+            {data?.results.map((show: CatalogShow) => (
+              <ShowCard key={show.slug} show={show} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

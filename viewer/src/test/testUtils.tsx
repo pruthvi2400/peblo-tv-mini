@@ -2,7 +2,6 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter } from 'react-router-dom';
 import type { RenderOptions } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
 import { vi } from 'vitest';
@@ -15,7 +14,7 @@ function makeWrapper(queryClient?: QueryClient) {
   return function Wrapper({ children }: WrapperProps) {
     return (
       <QueryClientProvider client={client}>
-        <MemoryRouter>{children}</MemoryRouter>
+        {children}
       </QueryClientProvider>
     );
   };
@@ -46,12 +45,9 @@ export function renderApp({ initialRoute, queryClient }: RenderAppOptions) {
       },
     },
   });
+  // App now handles routing internally with MemoryRouter for test routes
   const utils = render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[initialRoute]}>
-        <App client={client} />
-      </MemoryRouter>
-    </QueryClientProvider>
+    <App client={client} initialRoute={initialRoute} />
   );
   return { client, ...utils };
 }
